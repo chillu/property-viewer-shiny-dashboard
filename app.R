@@ -107,7 +107,8 @@ ui <- function(request) {
       mainPanel(tabsetPanel(
         type = "tabs",
         tabPanel("Plot",
-          plotOutput("plot")
+          plotOutput("plot"),
+          plotOutput("plot_price_by_floor_area_by_decade")
         ),
         tabPanel("Map",
           leafletOutput("map"),
@@ -152,7 +153,15 @@ server <- function(input, output) {
   }
   
   output$plot <- renderPlot({
-    ggplot(props_filtered(), aes(price_on, over_cv)) + geom_point() + geom_smooth()
+    ggplot(props_filtered(), aes(price_on, over_cv)) +
+      geom_point(aes(size = price), alpha = 1/3) +
+      geom_smooth()
+  })
+  
+  output$plot_price_by_floor_area_by_decade <- renderPlot({
+    ggplot(props_filtered(), aes(decade_built, price_by_floor_area)) +
+      geom_point(aes(size = price), alpha = 1/3)
+  })
   })
   
   pal <- colorNumeric(c("green", "yellow", "red"), 0:1)
