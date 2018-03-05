@@ -7,7 +7,9 @@ library(htmltools)
 library(scales)
 library(geosphere)
 
-props <- read_csv("./sample-data.csv")
+props <- read_csv("./sample-data.csv",
+  na = c("", "NULL")
+)
 props <- mutate(
   props,
   # TODO Use tags$a (currently only applies for the first record)
