@@ -115,7 +115,13 @@ ui <- function(request) {
           selectInput(
             "dot_colour",
             "Dot Colour",
-            choices = c("% over RV", "Price by floor area")
+            choices = c(
+              "% over RV" = 'over_cv', 
+              "Price by floor area" = 'price_by_floor_area',
+              "Commute by bike" = 'duration_bicycling',
+              "Commute by car" = 'duration_driving',
+              "Commute by bus" = 'duration_transit'
+            )
           )
         ),
         tabPanel("Table",
@@ -168,18 +174,23 @@ server <- function(input, output) {
   color <- function() {
     switch(
       input$dot_colour,
-      "% over RV" = ~ pal(rescale(over_cv, from = c(0.8, 2))),
-      "Price by floor area" = ~ pal(rescale(price_by_floor_area, from = c(1000, 12000)))
+      "over_cv" = ~ pal(rescale(over_cv, from = c(0.8, 2))),
+      "price_by_floor_area" = ~ pal(rescale(price_by_floor_area, from = c(1000, 12000))),
+      "duration_bicycling" = ~ pal(rescale(duration_bicycling)),
+      "duration_transit" = ~ pal(rescale(duration_transit)),
+      "duration_driving" = ~ pal(rescale(duration_driving))
     )
   }
   label <- function() {
     switch(
       input$dot_colour,
-      "% over RV" = ~ htmlEscape(paste("% over RV: ", as.character(over_cv))),
-      "Price by floor area" = ~ htmlEscape(paste("Price by floor area: $", as.character(price_by_floor_area)))
+      "over_cv" = ~ htmlEscape(paste("% over RV: ", as.character(over_cv))),
+      "price_by_floor_area" = ~ htmlEscape(paste("Price by floor area: $", as.character(price_by_floor_area))),
+      "duration_bicycling" = ~ htmlEscape(paste("Commute by bike: ", as.character(duration_bicycling))),
+      "duration_driving" = ~ htmlEscape(paste("Commute by car: ", as.character(duration_driving))),
+      "duration_transit" = ~ htmlEscape(paste("Commute by bus: ", as.character(duration_transit)))
     )
   }
-  
   popup <- function() {
     # TODO Is this horribly inefficient?
     props = props_filtered()
@@ -190,7 +201,13 @@ server <- function(input, output) {
       tags$br(),
       tags$span(paste("RV: ", as.character(props$capital_value), ", Price: ", as.character(props$price))),
       tags$br(),
-      tags$span(paste("Floor area: ", as.character(props$floor_area), ", Land area: ", as.character(props$land_area)))
+      tags$span(paste("Floor area: ", as.character(props$floor_area), ", Land area: ", as.character(props$land_area))),
+      tags$br(),
+      tags$span(paste("Commute by bicycling: ", as.character(props$duration_bicycling), " (", as.character(props$distance_total_bicycling), "km)")),
+      tags$br(),
+      tags$span(paste("Commute by driving: ", as.character(props$duration_driving), " (", as.character(props$distance_total_driving), "km)")),
+      tags$br(),
+      tags$span(paste("Commute by transit: ", as.character(props$duration_transit), " (", as.character(props$distance_total_transit), "km)"))
     ))
   }
   output$map <- renderLeaflet({
