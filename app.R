@@ -16,7 +16,8 @@ props <- mutate(
   href = paste('<a href="', url, '">', address, "</a>"),
   over_cv = round(price / capital_value, digits = 2),
   price_by_floor_area = round(price / floor_area),
-  price_by_land_area = round(price / land_area)
+  price_by_land_area = round(price / land_area),
+  view = paste(view_type, ': ', view_scope)
 )
 
 ui <- function(request) {
@@ -108,7 +109,25 @@ ui <- function(request) {
         type = "tabs",
         tabPanel("Plot",
           plotOutput("plot"),
-          plotOutput("plot_price_by_floor_area_by_decade")
+          fluidRow(
+            column(4,
+              plotOutput("plot_price_by_floor_area_by_decade")    
+            ),
+            column(4,
+              plotOutput("plot_duration_supermarket_over_cv")
+            ),
+            column(4,
+              plotOutput("plot_duration_centre_over_cv")
+            )
+          ),
+          fluidRow(
+            column(6,
+              plotOutput("plot_view_over_cv")
+            ),
+            column(6,
+              plotOutput("plot_view_by_floor_area")
+            )
+          )
         ),
         tabPanel("Map",
           leafletOutput("map"),
@@ -124,7 +143,10 @@ ui <- function(request) {
             )
           )
         ),
-        tabPanel("Table",
+        tabPanel("By Suburb",
+          dataTableOutput('table_by_suburb_with_price')
+        ),
+        tabPanel("All Data",
           dataTableOutput('table')
         )
       ))
@@ -158,20 +180,85 @@ server <- function(input, output) {
     )
   }
   
+  props_filtered_by_suburb_with_price <- function() {
+    by_suburb = group_by(props_filtered(), suburb_name)
+    summarise(
+      by_suburb,
+      count = n(),
+      round(mean(over_cv), 2),
+      round(mean(price)),
+      round(mean(price_by_floor_area))
+    )
+  }
+  
   output$plot <- renderPlot({
     ggplot(props_filtered(), aes(price_on, over_cv)) +
       geom_point(aes(size = price), alpha = 1/3) +
       geom_smooth() +
-      title = 'Sold for % over RV'
+      labs(
+        title = 'Sold for % over RV' 
+      )
   })
   
   output$plot_price_by_floor_area_by_decade <- renderPlot({
     ggplot(props_filtered(), aes(decade_built, price_by_floor_area)) +
       geom_point(aes(size = price), alpha = 1/3) +
+      geom_smooth() +
       labs(
         title = 'Price by floor area by decade'
       )
   })
+  
+  output$plot_duration_supermarket_over_cv <- renderPlot({
+    ggplot(props_filtered(), aes(duration_supermarket, over_cv)) +
+      geom_smooth() +
+      labs(
+        title = 'Driving time to nearest supermarket by % over RV'
+      )
+  })
+  
+  output$plot_duration_centre_over_cv <- renderPlot({
+    ggplot(props_filtered(), aes(duration_transit, over_cv)) +
+      geom_smooth() +
+      labs(
+        title = 'Public transit time to centre by % over RV',
+        subtitle = 'To Courtenay Place on Monday at 7:30'
+      )
+  })
+  
+  output$plot_view_over_cv <- renderPlot({
+    ggplot(props_filtered(), aes(view, over_cv)) +
+      geom_point(aes(size = price), alpha = 1/3) +
+      geom_smooth() +
+      labs(
+        title = 'View type by % over RV'
+      ) +
+      coord_flip()
+  })
+  
+  output$plot_view_by_floor_area <- renderPlot({
+    ggplot(props_filtered(), aes(view, price_by_floor_area)) +
+      geom_point(aes(size = price), alpha = 1/3) +
+      geom_smooth() +
+      labs(
+        title = 'View type by % over RV'
+      ) +
+      coord_flip()
+  })
+  
+  output$table_by_suburb_with_price <- renderDataTable(
+    props_filtered_by_suburb_with_price(),
+    options = list(
+      pageLength = 20,
+      columns = list(
+        list(title = "Suburb"),
+        list(title = "Count"),
+        list(title = "% over RV (mean)"),
+        list(title = "Sale price (mean)"),
+        list(title = "Price by sqm (mean)")
+      )
+    )
+  )
   
   pal <- colorNumeric(c("green", "yellow", "red"), 0:1)
   color <- function() {
