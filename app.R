@@ -161,12 +161,16 @@ server <- function(input, output) {
   output$plot <- renderPlot({
     ggplot(props_filtered(), aes(price_on, over_cv)) +
       geom_point(aes(size = price), alpha = 1/3) +
-      geom_smooth()
+      geom_smooth() +
+      title = 'Sold for % over RV'
   })
   
   output$plot_price_by_floor_area_by_decade <- renderPlot({
     ggplot(props_filtered(), aes(decade_built, price_by_floor_area)) +
-      geom_point(aes(size = price), alpha = 1/3)
+      geom_point(aes(size = price), alpha = 1/3) +
+      labs(
+        title = 'Price by floor area by decade'
+      )
   })
   
   pal <- colorNumeric(c("green", "yellow", "red"), 0:1)
