@@ -7,6 +7,67 @@ library(htmltools)
 library(scales)
 library(geosphere)
 
+wards = c(
+  "aro valley" = "centre",
+  "berhampore" = "south",
+  "breaker bay" = "east",
+  "broadmeadows" = "west",
+  "brooklyn" = "centre",
+  "brooklyn" = "south",
+  "churton park" = "north",
+  "crofton downs" = "west",
+  "glenside" = "north",
+  "grenada north" = "north",
+  "grenada village" = "north",
+  "hataitai" = "east",
+  "highbury" = "centre",
+  "horokiwi" = "north",
+  "houghton bay" = "east",
+  "island bay" = "south",
+  "johnsonville" = "north",
+  "kaiwharawhara" = "west",
+  "karaka bays" = "east",
+  "karori" = "west",
+  "kelburn" = "centre",
+  "khandallah" = "west",
+  "kilbirnie" = "east",
+  "kingston" = "south",
+  "lyall bay" = "east",
+  "makara beach" = "west",
+  "makara" = "west",
+  "maupuia" = "east",
+  "melrose" = "east",
+  "miramar" = "east",
+  "moa point" = "east",
+  "mornington" = "south",
+  "mount cook" = "centre",
+  "mount victoria" = "centre",
+  "newlands" = "north",
+  "newtown" = "south",
+  "ngaio" = "west",
+  "ngauranga" = "west",
+  "northland" = "west",
+  "ohariu" = "north",
+  "oriental bay" = "centre",
+  "owhiro bay" = "south",
+  "paparangi" = "north",
+  "pipitea" = "centre",
+  "rongotai" = "east",
+  "roseneath" = "east",
+  "seatoun" = "east",
+  "southgate" = "south",
+  "strathmore park" = "east",
+  "takapu valley" = "north",
+  "tawa" = "north",
+  "te aro" = "centre",
+  "thorndon" = "centre",
+  "vogeltown" = "south",
+  "wadestown" = "west",
+  "wellington central" = "centre",
+  "wilton" = "west",
+  "woodridge" = "north"
+)
+
 props <- read_csv("./sample-data.csv",
   na = c("", "NULL")
 )
@@ -17,7 +78,8 @@ props <- mutate(
   over_cv = round(price / capital_value, digits = 2),
   price_by_floor_area = round(price / floor_area),
   price_by_land_area = round(price / land_area),
-  view = paste(view_type, ': ', view_scope)
+  view = paste(view_type, ': ', view_scope),
+  ward = wards[str_to_lower(suburb_name)]
 )
 
 ui <- function(request) {
@@ -29,7 +91,7 @@ ui <- function(request) {
         radioButtons(
           "location_type",
           "Location",
-          choices = list("By Surburb" = "suburb", "By Coordinates" = "coordinates"), 
+          choices = list("By Surburb" = "suburb", "By Coordinates" = "coordinates", 'By Ward' = "ward"), 
           selected = "suburb"
         ),
         
@@ -63,7 +125,14 @@ ui <- function(request) {
             value = 1
           )
         ),
-        
+        conditionalPanel(
+          condition = "input.location_type == 'ward'",
+          selectInput(
+            "ward",
+            "Ward",
+            choices = c('north', 'south', 'east', 'west', 'centre')
+          )
+        ),
         sliderInput(
           inputId = "floor_area",
           label = "Floor Area",
@@ -155,10 +224,13 @@ ui <- function(request) {
 }
 server <- function(input, output) {
   props_filtered = function() {
-    is_using_coords <- function() {
-      input$location_type == "coordinates" && !is.na(as.numeric(input$location_lat))  && !is.na(as.numeric(input$location_lng))
+    
+    if (input$location_type == "coordinates" && !is.na(as.numeric(input$location_lat))  && !is.na(as.numeric(input$location_lng))) {
+      location_type = 'coordinates'
+    } else {
+      location_type = input$location_type
     }
-    filter(
+    tmp = filter(
       props,
       price_on > (now() - months(input$months_ago)),
       between(
@@ -167,17 +239,19 @@ server <- function(input, output) {
         input$capital_value[2]
       ),
       between(floor_area, input$floor_area[1], input$floor_area[2]),
-      between(land_area, input$land_area[1], input$land_area[2]),
-      (
-        # Filter by radius
-        is_using_coords() 
-        & distHaversine(c(as.numeric(input$location_lng), as.numeric(input$location_lat)), cbind(lng, lat)) < (input$location_radius * 1000)
-      ) | (
-        # Filter by suburb, if one is chosen
-        !is_using_coords()
-        & (input$suburb_name == "All" | suburb_name == input$suburb_name)
-      )
+      between(land_area, input$land_area[1], input$land_area[2])
     )
+    
+    # TODO Inline into filter() for better readability
+    if(location_type == 'coordinates') {
+      tmp = filter(tmp, distHaversine(c(as.numeric(input$location_lng), as.numeric(input$location_lat)), cbind(lng, lat)) < (input$location_radius * 1000))
+    } else if(location_type == 'suburb') {
+      tmp = filter(tmp, input$suburb_name == "All" | suburb_name == input$suburb_name)
+    } else if(location_type == 'ward') {
+      tmp = filter(tmp, ward == input$ward)
+    }
+    
+    tmp
   }
   
   props_filtered_by_suburb_with_price <- function() {
