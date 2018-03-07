@@ -177,6 +177,7 @@ server <- function(input, output) {
   color <- function() {
     switch(
       input$dot_colour,
+      # Ignore CV outliers over 2
       "over_cv" = ~ pal(rescale(over_cv, from = c(0.8, 2))),
       "price_by_floor_area" = ~ pal(rescale(price_by_floor_area, from = c(1000, 12000))),
       "duration_bicycling" = ~ pal(rescale(duration_bicycling)),
@@ -214,7 +215,6 @@ server <- function(input, output) {
     ))
   }
   output$map <- renderLeaflet({
-    # Render unfiltered list, but set bounds
     leaflet(props_filtered()) %>%
       addProviderTiles(
         providers$Stamen.TonerLite,
@@ -224,7 +224,6 @@ server <- function(input, output) {
         radius = ~ (price / 100000),
         stroke = FALSE,
         fillOpacity = 0.8,
-        # Ignore CV outliers over 2
         color = color(),
         label = label(),
         popup = popup()
