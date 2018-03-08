@@ -242,6 +242,8 @@ server <- function(input, output) {
       ),
       between(floor_area, input$floor_area[1], input$floor_area[2]),
       between(land_area, input$land_area[1], input$land_area[2])
+      # Ignore extreme outliers that make the plots hard to read
+      over_cv < 3
     )
     
     # TODO Inline into filter() for better readability
