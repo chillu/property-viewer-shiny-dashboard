@@ -293,21 +293,34 @@ server <- function(input, output) {
     )
   }
   
+  y <- function() {
+    switch(
+      input$plot_by,
+      'over_cv' = "% over RV", 
+      'price_by_floor_area' = "Price by floor area",
+      'price' = "Price"
+    )
+  }
+  
   output$plot <- renderPlot({
     ggplot(props_filtered(), aes(price_on, get(input$plot_by))) +
-      geom_point(aes(size = price), alpha = 1/3) +
+      geom_point(alpha = 1/3) +
       geom_smooth() +
       labs(
-        title = 'Price' 
+        title = 'Price',
+        x = 'Price',
+        y = y()
       )
   })
   
   output$plot_price_by_floor_area_by_decade <- renderPlot({
     ggplot(props_filtered(), aes(decade_built, get(input$plot_by)), show.legend = FALSE) +
-      geom_point(aes(size = price), alpha = 1/3) +
+      geom_point(alpha = 1/3) +
       geom_smooth() +
       labs(
-        title = 'Price by floor area by decade'
+        title = 'Decade',
+        x = 'Decade',
+        y = y()
       )
   })
   
@@ -315,7 +328,9 @@ server <- function(input, output) {
     ggplot(props_filtered(), aes(duration_supermarket, get(input$plot_by)), show.legend = FALSE) +
       geom_smooth() +
       labs(
-        title = 'Driving time to nearest supermarket'
+        title = 'Driving time to nearest supermarket',
+        x = 'Time (secs)',
+        y = y()
       )
   })
   
@@ -324,26 +339,30 @@ server <- function(input, output) {
       geom_smooth() +
       labs(
         title = 'Public transit time to centre',
-        subtitle = 'To Courtenay Place on Monday at 7:30'
+        subtitle = 'To Courtenay Place on Monday at 7:30',
+        x = 'Time (secs)',
+        y = y()
       )
   })
   
   output$plot_view_over_cv <- renderPlot({
     ggplot(props_filtered(), aes(view, get(input$plot_by)), show.legend = FALSE) +
-      geom_point(aes(size = price), alpha = 1/3) +
+      geom_point(alpha = 1/3) +
       geom_smooth() +
       labs(
-        title = 'View type'
+        title = 'View type',
+        y = y()
       ) +
       coord_flip()
   })
   
   output$plot_view_by_floor_area <- renderPlot({
     ggplot(props_filtered(), aes(view, get(input$plot_by)), show.legend = FALSE) +
-      geom_point(aes(size = price), alpha = 1/3) +
+      geom_point(alpha = 1/3) +
       geom_smooth() +
       labs(
-        title = 'View type'
+        title = 'View type',
+        y = y()
       ) +
       coord_flip()
   })
