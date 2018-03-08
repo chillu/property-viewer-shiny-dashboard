@@ -7,12 +7,12 @@ library(htmltools)
 library(scales)
 library(geosphere)
 
+# TODO Doesn't include all suburbs
 wards = c(
   "aro valley" = "centre",
   "berhampore" = "south",
   "breaker bay" = "east",
   "broadmeadows" = "west",
-  "brooklyn" = "centre",
   "brooklyn" = "south",
   "churton park" = "north",
   "crofton downs" = "west",
