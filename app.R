@@ -167,10 +167,10 @@ ui <- function(request) {
         sliderInput(
           inputId = "months_ago",
           label = "Sold date (months ago)",
-          min = 1,
+          min = 0,
           max = 12*10,
-          value = 6,
-          step = 3
+          value = c(0,12),
+          step = 6
         ),
         
         bookmarkButton()
@@ -242,7 +242,8 @@ server <- function(input, output) {
     }
     tmp = filter(
       props,
-      price_on > (now() - months(input$months_ago)),
+      price_on < (now() - months(input$months_ago[1])),
+      price_on > (now() - months(input$months_ago[2])),
       between(
         capital_value,
         input$capital_value[1],
