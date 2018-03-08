@@ -102,7 +102,8 @@ ui <- function(request) {
             "Suburb",
             choices = c(c("All"), sort(
               unique(props$suburb_name)
-            ))
+            )),
+            multiple = TRUE
           )
         ),
         conditionalPanel(
@@ -246,7 +247,7 @@ server <- function(input, output) {
     if(location_type == 'coordinates') {
       tmp = filter(tmp, distHaversine(c(as.numeric(input$location_lng), as.numeric(input$location_lat)), cbind(lng, lat)) < (input$location_radius * 1000))
     } else if(location_type == 'suburb') {
-      tmp = filter(tmp, input$suburb_name == "All" | suburb_name == input$suburb_name)
+      tmp = filter(tmp, length(input$suburb_name) == 0 | suburb_name %in% input$suburb_name)
     } else if(location_type == 'ward') {
       tmp = filter(tmp, ward == input$ward)
     }
