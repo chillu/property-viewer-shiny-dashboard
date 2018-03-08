@@ -120,7 +120,7 @@ ui <- function(request) {
             inputId = "location_radius",
             label = "Radius in km",
             min = 0.5,
-            max = 5,
+            max = 10,
             post = ' km',
             step = 0.5,
             value = 1
