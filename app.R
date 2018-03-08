@@ -165,6 +165,16 @@ ui <- function(request) {
         ),
         
         sliderInput(
+          inputId = "price",
+          label = "Sale Price",
+          min = 100000,
+          max = 1000000,
+          step = 50000,
+          pre = '$',
+          value = c(100000, 1000000)
+        ),
+        
+        sliderInput(
           inputId = "months_ago",
           label = "Sold date (months ago)",
           min = 0,
@@ -244,6 +254,11 @@ server <- function(input, output) {
       props,
       price_on < (now() - months(input$months_ago[1])),
       price_on > (now() - months(input$months_ago[2])),
+      between(
+        price,
+        input$price[1],
+        input$price[2]
+      ),
       between(
         capital_value,
         input$capital_value[1],
