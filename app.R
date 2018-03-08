@@ -179,6 +179,15 @@ ui <- function(request) {
       mainPanel(tabsetPanel(
         type = "tabs",
         tabPanel("Plot",
+          selectInput(
+            "plot_by",
+            "Plot by",
+            choices = c(
+              "% over RV" = 'over_cv', 
+              "Price by floor area" = 'price_by_floor_area',
+              "Price" = 'price'
+            )
+          ),
           plotOutput("plot"),
           fluidRow(
             column(4,
@@ -226,7 +235,6 @@ ui <- function(request) {
 }
 server <- function(input, output) {
   props_filtered = function() {
-    
     if (input$location_type == "coordinates" && !is.na(as.numeric(input$location_lat))  && !is.na(as.numeric(input$location_lng))) {
       location_type = 'coordinates'
     } else {
@@ -241,7 +249,7 @@ server <- function(input, output) {
         input$capital_value[2]
       ),
       between(floor_area, input$floor_area[1], input$floor_area[2]),
-      between(land_area, input$land_area[1], input$land_area[2])
+      between(land_area, input$land_area[1], input$land_area[2]),
       # Ignore extreme outliers that make the plots hard to read
       over_cv < 3
     )
@@ -270,16 +278,16 @@ server <- function(input, output) {
   }
   
   output$plot <- renderPlot({
-    ggplot(props_filtered(), aes(price_on, over_cv)) +
+    ggplot(props_filtered(), aes(price_on, get(input$plot_by))) +
       geom_point(aes(size = price), alpha = 1/3) +
       geom_smooth() +
       labs(
-        title = 'Sold for % over RV' 
+        title = 'Price' 
       )
   })
   
   output$plot_price_by_floor_area_by_decade <- renderPlot({
-    ggplot(props_filtered(), aes(decade_built, price_by_floor_area)) +
+    ggplot(props_filtered(), aes(decade_built, get(input$plot_by)), show.legend = FALSE) +
       geom_point(aes(size = price), alpha = 1/3) +
       geom_smooth() +
       labs(
@@ -288,38 +296,38 @@ server <- function(input, output) {
   })
   
   output$plot_duration_supermarket_over_cv <- renderPlot({
-    ggplot(props_filtered(), aes(duration_supermarket, over_cv)) +
+    ggplot(props_filtered(), aes(duration_supermarket, get(input$plot_by)), show.legend = FALSE) +
       geom_smooth() +
       labs(
-        title = 'Driving time to nearest supermarket by % over RV'
+        title = 'Driving time to nearest supermarket'
       )
   })
   
   output$plot_duration_centre_over_cv <- renderPlot({
-    ggplot(props_filtered(), aes(duration_transit, over_cv)) +
+    ggplot(props_filtered(), aes(duration_transit, get(input$plot_by)), show.legend = FALSE) +
       geom_smooth() +
       labs(
-        title = 'Public transit time to centre by % over RV',
+        title = 'Public transit time to centre',
         subtitle = 'To Courtenay Place on Monday at 7:30'
       )
   })
   
   output$plot_view_over_cv <- renderPlot({
-    ggplot(props_filtered(), aes(view, over_cv)) +
+    ggplot(props_filtered(), aes(view, get(input$plot_by)), show.legend = FALSE) +
       geom_point(aes(size = price), alpha = 1/3) +
       geom_smooth() +
       labs(
-        title = 'View type by % over RV'
+        title = 'View type'
       ) +
       coord_flip()
   })
   
   output$plot_view_by_floor_area <- renderPlot({
-    ggplot(props_filtered(), aes(view, price_by_floor_area)) +
+    ggplot(props_filtered(), aes(view, get(input$plot_by)), show.legend = FALSE) +
       geom_point(aes(size = price), alpha = 1/3) +
       geom_smooth() +
       labs(
-        title = 'View type by % over RV'
+        title = 'View type'
       ) +
       coord_flip()
   })
@@ -339,7 +347,7 @@ server <- function(input, output) {
   )
   
   pal <- colorNumeric(c("green", "yellow", "red"), 0:1)
-  color <- function() {
+  colour <- function() {
     switch(
       input$dot_colour,
       # Ignore CV outliers over 2
@@ -389,7 +397,7 @@ server <- function(input, output) {
         radius = ~ (price / 100000),
         stroke = FALSE,
         fillOpacity = 0.8,
-        color = color(),
+        color = colour(),
         label = label(),
         popup = popup()
       )
