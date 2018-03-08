@@ -168,8 +168,9 @@ ui <- function(request) {
           inputId = "months_ago",
           label = "Sold date (months ago)",
           min = 1,
-          max = 12,
-          value = 6
+          max = 12*10,
+          value = 6,
+          step = 3
         ),
         
         bookmarkButton()
