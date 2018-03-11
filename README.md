@@ -23,6 +23,7 @@ install.packages("tidyverse")
 install.packages("leaflet")
 install.packages("scales")
 install.packages("geosphere")
+install.packages("ggmap")
 ```
 
 ## Run

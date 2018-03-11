@@ -6,6 +6,7 @@ library(leaflet)
 library(htmltools)
 library(scales)
 library(geosphere)
+library(ggmap)
 
 # TODO Doesn't include all suburbs
 wards = c(
@@ -107,14 +108,11 @@ ui <- function(request) {
           )
         ),
         conditionalPanel(
-          condition = "input.location_type == 'coordinates'",
+          condition = "input.location_type == 'address'",
           textInput(
-            "location_lat",
-            "Latitude"
-          ),
-          textInput(
-            "location_lng",
-            "Longitude"
+            "location_address",
+            NULL,
+            placeholder = 'Type address'
           ),
           sliderInput(
             inputId = "location_radius",
@@ -124,7 +122,8 @@ ui <- function(request) {
             post = ' km',
             step = 0.5,
             value = 1
-          )
+          ),
+          actionButton('location_address_button', 'Go')
         ),
         conditionalPanel(
           condition = "input.location_type == 'ward'",
@@ -244,9 +243,11 @@ ui <- function(request) {
   )
 }
 server <- function(input, output) {
+  location <- reactiveValues(lat=NA, lng=NA)
+  
   props_filtered = function() {
-    if (input$location_type == "coordinates" && !is.na(as.numeric(input$location_lat))  && !is.na(as.numeric(input$location_lng))) {
-      location_type = 'coordinates'
+    if (input$location_type == "address" && !is.na(location$lat)  && !is.na(location$lng)) {
+      location_type = 'address'
     } else {
       location_type = input$location_type
     }
@@ -271,8 +272,8 @@ server <- function(input, output) {
     )
     
     # TODO Inline into filter() for better readability
-    if(location_type == 'coordinates') {
-      tmp = filter(tmp, distHaversine(c(as.numeric(input$location_lng), as.numeric(input$location_lat)), cbind(lng, lat)) < (input$location_radius * 1000))
+    if(location_type == 'address') {
+      tmp = filter(tmp, distHaversine(c(as.numeric(location$lng), as.numeric(location$lat)), cbind(lng, lat)) < (input$location_radius * 1000))
     } else if(location_type == 'suburb') {
       tmp = filter(tmp, length(input$suburb_name) == 0 | suburb_name %in% input$suburb_name)
     } else if(location_type == 'ward') {
@@ -292,6 +293,16 @@ server <- function(input, output) {
       round(mean(price_by_floor_area))
     )
   }
+  
+  # Run Geocode only when button is clicked
+  # https://github.com/rstudio/leaflet/issues/99
+  observeEvent(input$location_address_button,{
+    cat('Geocoding ', input$location_address)
+    res = geocode(input$location_address)
+    cat('Geocoding result: ', res$lat, res$lon)
+    location$lat <- as.numeric(res$lat)
+    location$lng <- as.numeric(res$lon)
+  })
   
   y <- function() {
     switch(
