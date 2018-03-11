@@ -89,10 +89,11 @@ ui <- function(request) {
     
     sidebarLayout(
       sidebarPanel(
+        h3('Location'),
         radioButtons(
           "location_type",
-          "Location",
-          choices = list("By Surburb" = "suburb", "By Coordinates" = "coordinates", 'By Ward' = "ward"), 
+          NULL,
+          choices = list("By Surburb" = "suburb", "By Address" = "address", 'By Ward' = "ward"), 
           selected = "suburb"
         ),
         
@@ -100,7 +101,7 @@ ui <- function(request) {
           condition = "input.location_type == 'suburb'",
           selectInput(
             "suburb_name",
-            "Suburb",
+            NULL,
             choices = c(c("All"), sort(
               unique(props$suburb_name)
             )),
@@ -129,10 +130,11 @@ ui <- function(request) {
           condition = "input.location_type == 'ward'",
           selectInput(
             "ward",
-            "Ward",
+            NULL,
             choices = c('north', 'south', 'east', 'west', 'centre')
           )
         ),
+        h3('Characteristics'),
         sliderInput(
           inputId = "floor_area",
           label = "Floor Area",
