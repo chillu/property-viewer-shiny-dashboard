@@ -200,23 +200,22 @@ ui <- function(request) {
             )
           ),
           plotOutput("plot"),
+        ),
+        tabPanel("Analysis",
           fluidRow(
             column(4,
               plotOutput("plot_price_by_floor_area_by_decade")    
             ),
             column(4,
-              plotOutput("plot_duration_supermarket_over_cv")
+              plotOutput("plot_duration_supermarket")
             ),
             column(4,
-              plotOutput("plot_duration_centre_over_cv")
+              plotOutput("plot_duration_centre")
             )
           ),
           fluidRow(
-            column(6,
-              plotOutput("plot_view_over_cv")
-            ),
-            column(6,
-              plotOutput("plot_view_by_floor_area")
+            column(4,
+              plotOutput("plot_view")
             )
           )
         ),
@@ -253,20 +252,12 @@ server <- function(input, output) {
     } else {
       location_type = input$location_type
     }
+    
     tmp = filter(
       props,
-      price_on < (now() - months(input$months_ago[1])),
-      price_on > (now() - months(input$months_ago[2])),
-      between(
-        price,
-        input$price[1],
-        input$price[2]
-      ),
-      between(
-        capital_value,
-        input$capital_value[1],
-        input$capital_value[2]
-      ),
+      between(price_on, now() - months(input$months_ago[2]), now() - months(input$months_ago[1])),
+      between(price, input$price[1], input$price[2]),
+      between(capital_value, input$capital_value[1], input$capital_value[2]),
       between(floor_area, input$floor_area[1], input$floor_area[2]),
       between(land_area, input$land_area[1], input$land_area[2]),
       # Ignore extreme outliers that make the plots hard to read
@@ -337,7 +328,7 @@ server <- function(input, output) {
       )
   })
   
-  output$plot_duration_supermarket_over_cv <- renderPlot({
+  output$plot_duration_supermarket <- renderPlot({
     ggplot(props_filtered(), aes(duration_supermarket, get(input$plot_by)), show.legend = FALSE) +
       geom_smooth() +
       labs(
@@ -347,7 +338,7 @@ server <- function(input, output) {
       )
   })
   
-  output$plot_duration_centre_over_cv <- renderPlot({
+  output$plot_duration_centre <- renderPlot({
     ggplot(props_filtered(), aes(duration_transit, get(input$plot_by)), show.legend = FALSE) +
       geom_smooth() +
       labs(
@@ -358,7 +349,7 @@ server <- function(input, output) {
       )
   })
   
-  output$plot_view_over_cv <- renderPlot({
+  output$plot_view <- renderPlot({
     ggplot(props_filtered(), aes(view, get(input$plot_by)), show.legend = FALSE) +
       geom_point(alpha = 1/3) +
       geom_smooth() +
