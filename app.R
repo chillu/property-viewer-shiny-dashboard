@@ -132,7 +132,8 @@ ui <- function(request) {
           selectInput(
             "ward",
             NULL,
-            choices = c('north', 'south', 'east', 'west', 'centre')
+            choices = c('north', 'south', 'east', 'west', 'centre'),
+            multiple = TRUE
           )
         ),
         h3('Characteristics'),
@@ -280,7 +281,7 @@ server <- function(input, output) {
     } else if(location_type == 'suburb') {
       tmp = filter(tmp, length(input$suburb_name) == 0 | suburb_name %in% input$suburb_name)
     } else if(location_type == 'ward') {
-      tmp = filter(tmp, ward == input$ward)
+      tmp = filter(tmp, ward %in% input$ward)
     }
     
     tmp
