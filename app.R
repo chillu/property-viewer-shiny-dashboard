@@ -179,6 +179,15 @@ ui <- function(request) {
         ),
         
         sliderInput(
+          inputId = "elevation",
+          label = "Elevation",
+          min = 0,
+          max = 400,
+          step = 5,
+          value = c(0, 400)
+        ),
+        
+        sliderInput(
           inputId = "num_bedrooms",
           label = "Number of bedrooms",
           min = 0,
@@ -281,6 +290,7 @@ server <- function(input, output) {
       between(capital_value, input$capital_value[1], input$capital_value[2]),
       between(floor_area, input$floor_area[1], input$floor_area[2]),
       between(land_area, input$land_area[1], input$land_area[2]),
+      between(elevation, input$elevation[1], input$elevation[2]),
       #ifelse(!is.na(num_bedrooms), between(num_bedrooms, input$num_bedrooms[1], input$num_bedrooms[2]), TRUE),
       # Ignore extreme outliers that make the plots hard to read
       over_cv < 3
