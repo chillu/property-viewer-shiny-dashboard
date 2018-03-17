@@ -79,6 +79,7 @@ props <- mutate(
   over_cv = round(price / capital_value, digits = 2),
   price_by_floor_area = round(price / floor_area),
   price_by_land_area = round(price / land_area),
+  price_on_year = format(price_on, "%Y"),
   view = paste(view_type, ': ', view_scope),
   ward = wards[str_to_lower(suburb_name)]
 )
@@ -216,6 +217,9 @@ ui <- function(request) {
           fluidRow(
             column(4,
               plotOutput("plot_view")
+            ),
+            column(4,
+              plotOutput('plot_by_year')  
             )
           )
         ),
@@ -246,6 +250,12 @@ ui <- function(request) {
 server <- function(input, output) {
   location <- reactiveValues(lat=NA, lng=NA)
   
+  filters = list(
+    'price_on' = function() {
+      between(price_on, now() - months(input$months_ago[2]), now() - months(input$months_ago[1]))
+    }
+  )
+
   props_filtered = function() {
     if (input$location_type == "address" && !is.na(location$lat)  && !is.na(location$lng)) {
       location_type = 'address'
@@ -274,6 +284,11 @@ server <- function(input, output) {
     }
     
     tmp
+  }
+  
+  props_filtered_by_year = function() {
+    props_filtered() %>%
+      group_by(price_on_year)
   }
   
   props_filtered_by_suburb_with_price <- function() {
@@ -369,6 +384,16 @@ server <- function(input, output) {
         y = y()
       ) +
       coord_flip()
+  })
+  
+  output$plot_by_year <- renderPlot({
+    ggplot(props_filtered_by_year(), aes(price_on_year, get(input$plot_by)), show.legend = FALSE) +
+      geom_point() +
+      geom_smooth() +
+      labs(
+        title = 'Mean by year',
+        y = y()
+      )
   })
   
   output$table_by_suburb_with_price <- renderDataTable(
