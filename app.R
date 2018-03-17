@@ -352,7 +352,7 @@ server <- function(input, output) {
         x = 'Price',
         y = y()
       )
-  })
+  }, height = 700)
   
   output$plot_price_by_floor_area_by_decade <- renderPlot({
     ggplot(props_filtered(), aes(decade_built, get(input$plot_by)), show.legend = FALSE) +
