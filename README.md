@@ -31,3 +31,10 @@ install.packages("ggmap")
 ```
 R -e "shiny::runApp('.')"
 ```
+
+## Screenshots
+
+![Main](_img/screenshot_main.png)
+![Analysis](_img/screenshot_analysis.png)
+![Map](_img/screenshot_map.png)
+![Data](_img/screenshot_data.png)
