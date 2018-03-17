@@ -142,7 +142,7 @@ ui <- function(request) {
           inputId = "floor_area",
           label = "Floor Area",
           min = 10,
-          max = 300,
+          max = 500,
           post = ' sqm',
           step = 10,
           value = c(60, 140)
@@ -151,8 +151,8 @@ ui <- function(request) {
         sliderInput(
           inputId = "land_area",
           label = "Land Area",
-          min = 100,
-          max = 2000,
+          min = 10,
+          max = 3000,
           post = ' sqm',
           step = 10,
           value = c(100, 1000)
