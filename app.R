@@ -70,8 +70,7 @@ wards = c(
 )
 
 props <- read_csv("./sample-data.csv",
-  na = c("", "NULL")
-)
+  na = c("", "NULL"))
 props <- mutate(
   props,
   # TODO Use tags$a (currently only applies for the first record)
@@ -95,7 +94,11 @@ ui <- function(request) {
         radioButtons(
           "location_type",
           NULL,
-          choices = list("By Surburb" = "suburb", "By Address" = "address", 'By Ward' = "ward"), 
+          choices = list(
+            "By Surburb" = "suburb",
+            "By Address" = "address",
+            'By Ward' = "ward"
+          ),
           selected = "suburb"
         ),
         
@@ -104,19 +107,17 @@ ui <- function(request) {
           selectInput(
             "suburb_name",
             NULL,
-            choices = c(c("All"), sort(
-              unique(props$suburb_name)
-            )),
+            choices = c(c("All"), sort(unique(
+              props$suburb_name
+            ))),
             multiple = TRUE
           )
         ),
         conditionalPanel(
           condition = "input.location_type == 'address'",
-          textInput(
-            "location_address",
+          textInput("location_address",
             NULL,
-            placeholder = 'Type address'
-          ),
+            placeholder = 'Type address'),
           sliderInput(
             inputId = "location_radius",
             label = "Radius in km",
@@ -200,84 +201,83 @@ ui <- function(request) {
           inputId = "months_ago",
           label = "Sold date (months ago)",
           min = 0,
-          max = 12*10,
-          value = c(0,12),
+          max = 12 * 10,
+          value = c(0, 12),
           step = 6
         ),
         
         bookmarkButton()
       ),
       
-      mainPanel(tabsetPanel(
-        type = "tabs",
-        tabPanel("Plot",
-          selectInput(
-            "plot_by",
-            "Plot by",
-            choices = c(
-              "% over RV" = 'over_cv', 
-              "Price by floor area" = 'price_by_floor_area',
-              "Price" = 'price'
+      mainPanel(
+        tabsetPanel(
+          type = "tabs",
+          tabPanel(
+            "Plot",
+            selectInput(
+              "plot_by",
+              "Plot by",
+              choices = c(
+                "% over RV" = 'over_cv',
+                "Price by floor area" = 'price_by_floor_area',
+                "Price" = 'price'
+              )
+            ),
+            plotOutput("plot")
+          ),
+          tabPanel(
+            "Analysis",
+            fluidRow(
+              column(4,
+                plotOutput("plot_price_by_floor_area_by_decade")),
+              column(4,
+                plotOutput("plot_duration_supermarket")),
+              column(4,
+                plotOutput("plot_duration_centre"))
+            ),
+            fluidRow(column(4,
+              plotOutput("plot_view")),
+              column(4,
+                plotOutput('plot_by_year')))
+          ),
+          tabPanel(
+            "Map",
+            leafletOutput("map"),
+            selectInput(
+              "dot_colour",
+              "Dot Colour",
+              choices = c(
+                "% over RV" = 'over_cv',
+                "Price by floor area" = 'price_by_floor_area',
+                "Commute by bike" = 'duration_bicycling',
+                "Commute by car" = 'duration_driving',
+                "Commute by bus" = 'duration_transit'
+              )
             )
           ),
-          plotOutput("plot"),
-        ),
-        tabPanel("Analysis",
-          fluidRow(
-            column(4,
-              plotOutput("plot_price_by_floor_area_by_decade")    
-            ),
-            column(4,
-              plotOutput("plot_duration_supermarket")
-            ),
-            column(4,
-              plotOutput("plot_duration_centre")
-            )
-          ),
-          fluidRow(
-            column(4,
-              plotOutput("plot_view")
-            ),
-            column(4,
-              plotOutput('plot_by_year')  
-            )
-          )
-        ),
-        tabPanel("Map",
-          leafletOutput("map"),
-          selectInput(
-            "dot_colour",
-            "Dot Colour",
-            choices = c(
-              "% over RV" = 'over_cv', 
-              "Price by floor area" = 'price_by_floor_area',
-              "Commute by bike" = 'duration_bicycling',
-              "Commute by car" = 'duration_driving',
-              "Commute by bus" = 'duration_transit'
-            )
-          )
-        ),
-        tabPanel("By Suburb",
-          dataTableOutput('table_by_suburb_with_price')
-        ),
-        tabPanel("All Data",
-          dataTableOutput('table')
+          tabPanel("By Suburb",
+            dataTableOutput('table_by_suburb_with_price')),
+          tabPanel("All Data",
+            dataTableOutput('table'))
         )
-      ))
+      )
     )
   )
 }
 server <- function(input, output) {
-  location <- reactiveValues(lat=NA, lng=NA)
+  location <- reactiveValues(lat = NA, lng = NA)
   
   filters = list(
     'price_on' = function() {
-      between(price_on, now() - months(input$months_ago[2]), now() - months(input$months_ago[1]))
+      between(price_on,
+        now() - months(input$months_ago[2]),
+        now() - months(input$months_ago[1]))
     }
   )
-
+  
   props_filtered = function() {
-    if (input$location_type == "address" && !is.na(location$lat)  && !is.na(location$lng)) {
+    if (input$location_type == "address" &&
+        !is.na(location$lat)  && !is.na(location$lng)) {
       location_type = 'address'
     } else {
       location_type = input$location_type
@@ -285,9 +285,17 @@ server <- function(input, output) {
     
     tmp = filter(
       props,
-      between(price_on, now() - months(input$months_ago[2]), now() - months(input$months_ago[1])),
+      between(
+        price_on,
+        now() - months(input$months_ago[2]),
+        now() - months(input$months_ago[1])
+      ),
       between(price, input$price[1], input$price[2]),
-      between(capital_value, input$capital_value[1], input$capital_value[2]),
+      between(
+        capital_value,
+        input$capital_value[1],
+        input$capital_value[2]
+      ),
       between(floor_area, input$floor_area[1], input$floor_area[2]),
       between(land_area, input$land_area[1], input$land_area[2]),
       between(elevation, input$elevation[1], input$elevation[2]),
@@ -297,11 +305,16 @@ server <- function(input, output) {
     )
     
     # TODO Inline into filter() for better readability
-    if(location_type == 'address') {
-      tmp = filter(tmp, distHaversine(c(as.numeric(location$lng), as.numeric(location$lat)), cbind(lng, lat)) < (input$location_radius * 1000))
-    } else if(location_type == 'suburb') {
-      tmp = filter(tmp, length(input$suburb_name) == 0 | suburb_name %in% input$suburb_name)
-    } else if(location_type == 'ward') {
+    if (location_type == 'address') {
+      tmp = filter(tmp,
+        distHaversine(c(
+          as.numeric(location$lng), as.numeric(location$lat)
+        ), cbind(lng, lat)) < (input$location_radius * 1000))
+    } else if (location_type == 'suburb') {
+      tmp = filter(tmp,
+        length(input$suburb_name) == 0 |
+          suburb_name %in% input$suburb_name)
+    } else if (location_type == 'ward') {
       tmp = filter(tmp, ward %in% input$ward)
     }
     
@@ -315,18 +328,16 @@ server <- function(input, output) {
   
   props_filtered_by_suburb_with_price <- function() {
     by_suburb = group_by(props_filtered(), suburb_name)
-    summarise(
-      by_suburb,
+    summarise(by_suburb,
       count = n(),
       round(mean(over_cv), 2),
       round(mean(price)),
-      round(mean(price_by_floor_area))
-    )
+      round(mean(price_by_floor_area)))
   }
   
   # Run Geocode only when button is clicked
   # https://github.com/rstudio/leaflet/issues/99
-  observeEvent(input$location_address_button,{
+  observeEvent(input$location_address_button, {
     cat('Geocoding ', input$location_address)
     res = geocode(input$location_address)
     cat('Geocoding result: ', res$lat, res$lon)
@@ -337,7 +348,7 @@ server <- function(input, output) {
   y <- function() {
     switch(
       input$plot_by,
-      'over_cv' = "% over RV", 
+      'over_cv' = "% over RV",
       'price_by_floor_area' = "Price by floor area",
       'price' = "Price"
     )
@@ -345,38 +356,36 @@ server <- function(input, output) {
   
   output$plot <- renderPlot({
     ggplot(props_filtered(), aes(price_on, get(input$plot_by))) +
-      geom_point(alpha = 1/3) +
+      geom_point(alpha = 1 / 3) +
       geom_smooth() +
-      labs(
-        title = 'Price',
+      labs(title = 'Price',
         x = 'Price',
-        y = y()
-      )
+        y = y())
   }, height = 700)
   
   output$plot_price_by_floor_area_by_decade <- renderPlot({
     ggplot(props_filtered(), aes(decade_built, get(input$plot_by)), show.legend = FALSE) +
-      geom_point(alpha = 1/3) +
+      geom_point(alpha = 1 / 3) +
       geom_smooth() +
-      labs(
-        title = 'Decade',
+      labs(title = 'Decade',
         x = 'Decade',
-        y = y()
-      )
+        y = y())
   })
   
   output$plot_duration_supermarket <- renderPlot({
-    ggplot(props_filtered(), aes(duration_supermarket, get(input$plot_by)), show.legend = FALSE) +
+    ggplot(props_filtered(),
+      aes(duration_supermarket, get(input$plot_by)),
+      show.legend = FALSE) +
       geom_smooth() +
-      labs(
-        title = 'Driving time to nearest supermarket',
+      labs(title = 'Driving time to nearest supermarket',
         x = 'Time (secs)',
-        y = y()
-      )
+        y = y())
   })
   
   output$plot_duration_centre <- renderPlot({
-    ggplot(props_filtered(), aes(duration_transit, get(input$plot_by)), show.legend = FALSE) +
+    ggplot(props_filtered(),
+      aes(duration_transit, get(input$plot_by)),
+      show.legend = FALSE) +
       geom_smooth() +
       labs(
         title = 'Public transit time to centre',
@@ -388,38 +397,33 @@ server <- function(input, output) {
   
   output$plot_view <- renderPlot({
     ggplot(props_filtered(), aes(view, get(input$plot_by)), show.legend = FALSE) +
-      geom_point(alpha = 1/3) +
+      geom_point(alpha = 1 / 3) +
       geom_smooth() +
-      labs(
-        title = 'View type',
-        y = y()
-      ) +
+      labs(title = 'View type',
+        y = y()) +
       coord_flip()
   })
   
   output$plot_view_by_floor_area <- renderPlot({
     ggplot(props_filtered(), aes(view, get(input$plot_by)), show.legend = FALSE) +
-      geom_point(alpha = 1/3) +
+      geom_point(alpha = 1 / 3) +
       geom_smooth() +
-      labs(
-        title = 'View type',
-        y = y()
-      ) +
+      labs(title = 'View type',
+        y = y()) +
       coord_flip()
   })
   
   output$plot_by_year <- renderPlot({
-    ggplot(props_filtered_by_year(), aes(price_on_year, get(input$plot_by)), show.legend = FALSE) +
+    ggplot(props_filtered_by_year(),
+      aes(price_on_year, get(input$plot_by)),
+      show.legend = FALSE) +
       geom_point() +
       geom_smooth() +
-      labs(
-        title = 'Mean by year',
-        y = y()
-      )
+      labs(title = 'Mean by year',
+        y = y())
   })
   
-  output$table_by_suburb_with_price <- renderDataTable(
-    props_filtered_by_suburb_with_price(),
+  output$table_by_suburb_with_price <- renderDataTable(props_filtered_by_suburb_with_price(),
     options = list(
       pageLength = 20,
       columns = list(
@@ -429,8 +433,7 @@ server <- function(input, output) {
         list(title = "Sale price (mean)"),
         list(title = "Price by sqm (mean)")
       )
-    )
-  )
+    ))
   
   pal <- colorNumeric(c("green", "yellow", "red"), 0:1)
   colour <- function() {
@@ -438,7 +441,9 @@ server <- function(input, output) {
       input$dot_colour,
       # Ignore CV outliers over 2
       "over_cv" = ~ pal(rescale(over_cv, from = c(0.8, 2))),
-      "price_by_floor_area" = ~ pal(rescale(price_by_floor_area, from = c(1000, 12000))),
+      "price_by_floor_area" = ~ pal(rescale(
+        price_by_floor_area, from = c(1000, 12000)
+      )),
       "duration_bicycling" = ~ pal(rescale(duration_bicycling)),
       "duration_transit" = ~ pal(rescale(duration_transit)),
       "duration_driving" = ~ pal(rescale(duration_driving))
@@ -448,37 +453,83 @@ server <- function(input, output) {
     switch(
       input$dot_colour,
       "over_cv" = ~ htmlEscape(paste("% over RV: ", as.character(over_cv))),
-      "price_by_floor_area" = ~ htmlEscape(paste("Price by floor area: $", as.character(price_by_floor_area))),
-      "duration_bicycling" = ~ htmlEscape(paste("Commute by bike: ", as.character(duration_bicycling))),
-      "duration_driving" = ~ htmlEscape(paste("Commute by car: ", as.character(duration_driving))),
-      "duration_transit" = ~ htmlEscape(paste("Commute by bus: ", as.character(duration_transit)))
+      "price_by_floor_area" = ~ htmlEscape(paste(
+        "Price by floor area: $", as.character(price_by_floor_area)
+      )),
+      "duration_bicycling" = ~ htmlEscape(paste(
+        "Commute by bike: ", as.character(duration_bicycling)
+      )),
+      "duration_driving" = ~ htmlEscape(paste(
+        "Commute by car: ", as.character(duration_driving)
+      )),
+      "duration_transit" = ~ htmlEscape(paste(
+        "Commute by bus: ", as.character(duration_transit)
+      ))
     )
   }
   popup <- function() {
     # TODO Is this horribly inefficient?
     props = props_filtered()
-    as.character(tagList(
-      tags$a(href=props$url, target="_blank", props$address),
-      tags$br(),
-      tags$span(paste("Last sold: ", as.character(props$price_on))),
-      tags$br(),
-      tags$span(paste("RV: ", as.character(props$capital_value), ", Price: ", as.character(props$price))),
-      tags$br(),
-      tags$span(paste("Floor area: ", as.character(props$floor_area), ", Land area: ", as.character(props$land_area))),
-      tags$br(),
-      tags$span(paste("Commute by bicycling: ", as.character(props$duration_bicycling), " (", as.character(props$distance_total_bicycling), "km)")),
-      tags$br(),
-      tags$span(paste("Commute by driving: ", as.character(props$duration_driving), " (", as.character(props$distance_total_driving), "km)")),
-      tags$br(),
-      tags$span(paste("Commute by transit: ", as.character(props$duration_transit), " (", as.character(props$distance_total_transit), "km)"))
-    ))
+    as.character(
+      tagList(
+        tags$a(href = props$url, target = "_blank", props$address),
+        tags$br(),
+        tags$span(paste(
+          "Last sold: ", as.character(props$price_on)
+        )),
+        tags$br(),
+        tags$span(paste(
+          "RV: ",
+          as.character(props$capital_value),
+          ", Price: ",
+          as.character(props$price)
+        )),
+        tags$br(),
+        tags$span(
+          paste(
+            "Floor area: ",
+            as.character(props$floor_area),
+            ", Land area: ",
+            as.character(props$land_area)
+          )
+        ),
+        tags$br(),
+        tags$span(
+          paste(
+            "Commute by bicycling: ",
+            as.character(props$duration_bicycling),
+            " (",
+            as.character(props$distance_total_bicycling),
+            "km)"
+          )
+        ),
+        tags$br(),
+        tags$span(
+          paste(
+            "Commute by driving: ",
+            as.character(props$duration_driving),
+            " (",
+            as.character(props$distance_total_driving),
+            "km)"
+          )
+        ),
+        tags$br(),
+        tags$span(
+          paste(
+            "Commute by transit: ",
+            as.character(props$duration_transit),
+            " (",
+            as.character(props$distance_total_transit),
+            "km)"
+          )
+        )
+      )
+    )
   }
   output$map <- renderLeaflet({
     leaflet(props_filtered()) %>%
-      addProviderTiles(
-        providers$Stamen.TonerLite,
-        options = providerTileOptions(noWrap = TRUE)
-      ) %>%
+      addProviderTiles(providers$Stamen.TonerLite,
+        options = providerTileOptions(noWrap = TRUE)) %>%
       addCircleMarkers(
         radius = ~ (price / 100000),
         stroke = FALSE,
