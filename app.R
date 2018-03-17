@@ -81,7 +81,8 @@ props <- mutate(
   price_by_land_area = round(price / land_area),
   price_on_year = format(price_on, "%Y"),
   view = paste(view_type, ': ', view_scope),
-  ward = wards[str_to_lower(suburb_name)]
+  ward = wards[str_to_lower(suburb_name)],
+  num_bedrooms = ifelse(num_bedrooms, num_bedrooms, bed_estimate)
 )
 
 ui <- function(request) {
@@ -178,6 +179,15 @@ ui <- function(request) {
         ),
         
         sliderInput(
+          inputId = "num_bedrooms",
+          label = "Number of bedrooms",
+          min = 0,
+          max = 6,
+          step = 1,
+          value = c(0, 3)
+        ),
+        
+        sliderInput(
           inputId = "months_ago",
           label = "Sold date (months ago)",
           min = 0,
@@ -271,6 +281,7 @@ server <- function(input, output) {
       between(capital_value, input$capital_value[1], input$capital_value[2]),
       between(floor_area, input$floor_area[1], input$floor_area[2]),
       between(land_area, input$land_area[1], input$land_area[2]),
+      #ifelse(!is.na(num_bedrooms), between(num_bedrooms, input$num_bedrooms[1], input$num_bedrooms[2]), TRUE),
       # Ignore extreme outliers that make the plots hard to read
       over_cv < 3
     )
